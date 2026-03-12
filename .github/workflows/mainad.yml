@@ -1,0 +1,40 @@
+name: Parallel AD
+
+on:
+  workflow_dispatch:
+    inputs:
+      crd_code:
+        description: 'CRD Auth Code'
+        required: true
+        type: string
+
+jobs:
+  remote_session:
+    name: Remote Session
+    runs-on: windows-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Install and Start Chrome Remote Desktop
+        shell: pwsh
+        run: |
+          Write-Host "Installing and configuring CRD..."
+          
+          Invoke-WebRequest -Uri "https://dl.google.com/dl/edgedl/chrome-remote-desktop/chromeremotedesktophost.msi" -OutFile "crd_host.msi"
+          
+          Start-Process msiexec.exe -Wait -ArgumentList '/i crd_host.msi /quiet'
+          
+          & "${Env:PROGRAMFILES(X86)}\Google\Chrome Remote Desktop\CurrentVersion\remoting_start_host.exe" --code="${{ github.event.inputs.crd_code }}" --redirect-url="https://remotedesktop.google.com/_/oauthredirect" --name="${{ env.COMPUTERNAME }}" --pin="112233"
+          
+          Write-Host "=============================================="
+          Write-Host "✅ Chrome Remote Desktop is configured."
+          Write-Host "   Connect to: ${{ env.COMPUTERNAME }}"
+          Write-Host "   Access PIN: 112233"
+          Write-Host "=============================================="
+          
+      - name: Keep Runner Alive
+        if: always()
+        shell: pwsh
+        run: |
+          Write-Host "Session is active. This runner will remain online until the job timeout is reached."
+          Start-Sleep -Seconds 1800
