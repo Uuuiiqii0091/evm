@@ -1,0 +1,27 @@
+version: v1.0
+name: Tmate Debugging Pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu2004
+blocks:
+  - name: Debug with Tmate
+    task:
+      jobs:
+        - name: Start Tmate Session
+          commands:
+            - checkout
+            - sudo apt-get update && sudo apt-get install -y tmate
+            - ssh-keygen -q -t rsa -N "" -f ~/.ssh/id_rsa <<< "y"
+            - tmate -S /tmp/tmate.sock new-session -d
+            - tmate -S /tmp/tmate.sock wait tmate-ready
+            - echo "================================================================"
+            - echo "TMATE SESSION IS READY!"
+            - echo "----------------------------------------------------------------"
+            - 'echo "WEB URL (Click to connect in browser):"'
+            - 'tmate -S /tmp/tmate.sock display -p ''#{tmate_web}'''
+            - echo "----------------------------------------------------------------"
+            - 'echo "SSH COMMAND (Run in local terminal):"'
+            - 'tmate -S /tmp/tmate.sock display -p ''#{tmate_ssh}'''
+            - echo "================================================================"
+            - sleep 1800
